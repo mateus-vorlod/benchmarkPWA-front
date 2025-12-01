@@ -1,51 +1,96 @@
-import viteLogo from './assets/vite.svg'
-import reactLogo from './assets/react.svg'
-import sassLogo from './assets/sass.svg'
-import githubLogo from './assets/github.svg'
-import './App.scss'
+import './App.scss';
 
 function App() {
   return (
-    <div className="App">
+    <div className="app">
+      <header className="app-header">
+        <div className="logo">
+          <span className="logo-badge">PWA</span>
+          <span className="logo-text">React PWA Starter</span>
+        </div>
+      </header>
 
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-        <a href="https://sass-lang.com" target="_blank">
-          <img src={sassLogo} className="logo sass" alt="Sass logo" />
-        </a>
-      </div>
+      <main className="app-main">
+        {/* HERO SIMPLES */}
+        <section className="hero">
+          <div className="hero-text">
+            <h1>Seu ponto de partida para PWAs com React</h1>
+            <p className="hero-subtitle">
+              Use este projeto para criar, testar e estudar Progressive Web Apps,
+              desde o básico de instalação até testes com Lighthouse.
+            </p>
 
-      <h2>Vite + React + Sass</h2>
-      <p className="read-the-docs">
-        Click on the logos to learn more about each too
-      </p>
+            <div className="hero-actions">
+              <button
+                className="btn primary"
+                onClick={() =>
+                  window.alert('Aqui você pode integrar a ação de rodar o Lighthouse / benchmark.')
+                }
+              >
+                Rodar benchmark
+              </button>
 
-      <div>
-        
-      </div>
-      
-      <div className="card">
-        <a className="center" href="https://github.com/MengLinMaker/PWA-Vite-React-Boilerplate" target="_blank">
-          <button className="credits">
-            <img src={githubLogo} className="logo github" alt="Vite logo" />
-            <p>Meng Lin Maker</p>
-          </button>
-        </a>
-        
-        <h1>
-          <a href="https://github.com/MengLinMaker/PWA-Vite-React-Boilerplate/generate" target="_blank">
-            <button> Use This Boilerplate </button>
-          </a>
-        </h1>
-      </div>
+              <button
+                className="btn secondary"
+                onClick={() =>
+                  document
+                    .getElementById('como-testar')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+              >
+                Como testar como PWA
+              </button>
+            </div>
+          </div>
 
+          <div className="hero-card">
+            <h2>Status do PWA</h2>
+            <ul>
+              <li>
+                <span>Manifest</span>
+                <strong>OK</strong>
+              </li>
+              <li>
+                <span>Service worker</span>
+                <strong>Ativo</strong>
+              </li>
+              <li>
+                <span>Instalação</span>
+                <strong>Disponível</strong>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* SEÇÃO PASSOS BEM OBJETIVA */}
+        <section id="como-testar" className="section">
+          <h2>Como testar este app como PWA</h2>
+          <ol className="steps">
+            <li>
+              Rode <code>npm run build</code> e depois <code>npm run preview</code>.
+            </li>
+            <li>Acesse a URL de preview (ex.: <code>http://localhost:4173</code>).</li>
+            <li>
+              No Chrome DevTools, vá em <strong>Application &gt; Manifest</strong>.
+            </li>
+            <li>
+              Verifique se o app está marcado como <strong>Installable</strong>.
+            </li>
+            <li>
+              Use a aba <strong>Lighthouse</strong> para gerar o relatório.
+            </li>
+          </ol>
+        </section>
+      </main>
+
+      <footer className="app-footer">
+        <span>React PWA Starter</span>
+        <span>
+          Feito com <span className="heart">♥</span> em Vite + React
+        </span>
+      </footer>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
