@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { RELATORIOS_MOCK } from '../data/relatoriosMock';
 import type { RelatorioPWA } from '../types/relatorio';
+import { http } from '../services/http';
 import './Relatorios.scss';
 
 function formatDate(iso: string) {
@@ -30,159 +30,201 @@ function getScoreClass(score: number | null | undefined) {
 export function RelatorioDetalhePage() {
   const { id } = useParams<{ id: string }>();
 
-  const relatorio = useMemo<RelatorioPWA | undefined>(
-    () => RELATORIOS_MOCK.find((r) => r._id === id),
-    [id],
-  );
+  const [relatorio, setRelatorio] = useState<RelatorioPWA | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
-  if (!relatorio) {
+  useEffect(() => {
+    async function carregar() {
+      if (!id) {
+        setErro('ID do relatório não informado.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setErro(null);
+
+        const { data } = await http.get<RelatorioPWA>(
+            import.meta.env.VITE_N8N_BUSCAR_ID_PATH,
+            { params: { id } },
+        );
+
+        setRelatorio(data ?? null);
+      } catch (e: any) {
+        setErro(e?.message ?? 'Erro ao buscar relatório');
+        setRelatorio(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    carregar();
+  }, [id]);
+
+  if (loading) {
     return (
-      <main className="relatorios-page">
-        <section className="relatorios-empty">
-          <h1>Relatório não encontrado</h1>
-          <p>Verifique o link ou selecione um relatório na lista.</p>
-          <Link to="/relatorios" className="relatorios-list__link">
-            Voltar para lista
-          </Link>
-        </section>
-      </main>
+        <main className="relatorios-page">
+          <section className="relatorios-empty">
+            <h1>Carregando relatório...</h1>
+            <p>Aguarde um instante.</p>
+            <Link to="/relatorios" className="relatorios-list__link">
+              Voltar para lista
+            </Link>
+          </section>
+        </main>
+    );
+  }
+
+  if (erro || !relatorio) {
+    return (
+        <main className="relatorios-page">
+          <section className="relatorios-empty">
+            <h1>Relatório não encontrado</h1>
+            <p>{erro ?? 'Verifique o link ou selecione um relatório na lista.'}</p>
+            <Link to="/relatorios" className="relatorios-list__link">
+              Voltar para lista
+            </Link>
+          </section>
+        </main>
     );
   }
 
   const { url, geradoEm, lighthouseVersion, scores, metrics, improvements } = relatorio;
 
   return (
-    <main className="relatorios-page">
-      <section className="section relatorios-header">
-        <div className="relatorios-header__top">
-          <div>
-            <h1>Detalhes do relatório</h1>
-            <p className="relatorios-header__subtitle">
-              Resultados detalhados da execução do Lighthouse.
-            </p>
+      <main className="relatorios-page">
+        <section className="section relatorios-header">
+          <div className="relatorios-header__top">
+            <div>
+              <h1>Detalhes do relatório</h1>
+              <p className="relatorios-header__subtitle">
+                Resultados detalhados da execução do Lighthouse.
+              </p>
+            </div>
+            <Link to="/relatorios" className="relatorios-list__link relatorios-header__back">
+              ← Voltar para lista
+            </Link>
           </div>
-          <Link to="/relatorios" className="relatorios-list__link relatorios-header__back">
-            ← Voltar para lista
-          </Link>
-        </div>
 
-        <div className="relatorios-header__info">
-          <div>
-            <span className="label">URL</span>
-            <span className="value">{url}</span>
+          <div className="relatorios-header__info">
+            <div>
+              <span className="label">URL</span>
+              <span className="value">{url}</span>
+            </div>
+            <div>
+              <span className="label">Gerado em</span>
+              <span className="value">{formatDate(geradoEm)}</span>
+            </div>
+            <div>
+              <span className="label">Lighthouse</span>
+              <span className="value">v{lighthouseVersion}</span>
+            </div>
           </div>
-          <div>
-            <span className="label">Gerado em</span>
-            <span className="value">{formatDate(geradoEm)}</span>
-          </div>
-          <div>
-            <span className="label">Lighthouse</span>
-            <span className="value">v{lighthouseVersion}</span>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Scores principais */}
-      <section className="section relatorios-scores">
-        <h2>Scores por categoria</h2>
-        <div className="relatorios-scores__grid">
-          <div className="relatorios-scores__item">
-            <span className="label">Performance</span>
-            <span className={getScoreClass(scores.performance)}>
+        {/* Scores principais */}
+        <section className="section relatorios-scores">
+          <h2>Scores por categoria</h2>
+          <div className="relatorios-scores__grid">
+            <div className="relatorios-scores__item">
+              <span className="label">Performance</span>
+              <span className={getScoreClass(scores.performance)}>
               {formatScore(scores.performance)}
             </span>
-          </div>
-          <div className="relatorios-scores__item">
-            <span className="label">Acessibilidade</span>
-            <span className={getScoreClass(scores.accessibility)}>
+            </div>
+            <div className="relatorios-scores__item">
+              <span className="label">Acessibilidade</span>
+              <span className={getScoreClass(scores.accessibility)}>
               {formatScore(scores.accessibility)}
             </span>
-          </div>
-          <div className="relatorios-scores__item">
-            <span className="label">Boas práticas</span>
-            <span className={getScoreClass(scores.bestPractices)}>
+            </div>
+            <div className="relatorios-scores__item">
+              <span className="label">Boas práticas</span>
+              <span className={getScoreClass(scores.bestPractices)}>
               {formatScore(scores.bestPractices)}
             </span>
-          </div>
-          <div className="relatorios-scores__item">
-            <span className="label">SEO</span>
-            <span className={getScoreClass(scores.seo)}>
+            </div>
+            <div className="relatorios-scores__item">
+              <span className="label">SEO</span>
+              <span className={getScoreClass(scores.seo)}>
               {formatScore(scores.seo)}
             </span>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Métricas essenciais */}
-      <section className="section relatorios-metrics">
-        <h2>Métricas essenciais</h2>
-        <div className="relatorios-metrics__grid">
-          <div className="metric-card">
-            <span className="metric-label">First Contentful Paint</span>
-            <span className="metric-value">
+        {/* Métricas essenciais */}
+        <section className="section relatorios-metrics">
+          <h2>Métricas essenciais</h2>
+          <div className="relatorios-metrics__grid">
+            <div className="metric-card">
+              <span className="metric-label">First Contentful Paint</span>
+              <span className="metric-value">
               {formatMsToSeconds(metrics.firstContentfulPaint)}
             </span>
-          </div>
-          <div className="metric-card">
-            <span className="metric-label">Largest Contentful Paint</span>
-            <span className="metric-value">
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Largest Contentful Paint</span>
+              <span className="metric-value">
               {formatMsToSeconds(metrics.largestContentfulPaint)}
             </span>
-          </div>
-          <div className="metric-card">
-            <span className="metric-label">Speed Index</span>
-            <span className="metric-value">
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Speed Index</span>
+              <span className="metric-value">
               {formatMsToSeconds(metrics.speedIndex)}
             </span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Total Blocking Time</span>
+              <span className="metric-value">{metrics.totalBlockingTime} ms</span>
+            </div>
+            <div className="metric-card">
+              <span className="metric-label">Cumulative Layout Shift</span>
+              <span className="metric-value">{metrics.cumulativeLayoutShift}</span>
+            </div>
           </div>
-          <div className="metric-card">
-            <span className="metric-label">Total Blocking Time</span>
-            <span className="metric-value">{metrics.totalBlockingTime} ms</span>
-          </div>
-          <div className="metric-card">
-            <span className="metric-label">Cumulative Layout Shift</span>
-            <span className="metric-value">{metrics.cumulativeLayoutShift}</span>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Tabela de melhorias */}
-      <section className="section relatorios-improvements">
-        <h2>Pontos de melhoria</h2>
-        <p className="relatorios-improvements__hint">
-          Itens com menor score representam oportunidades mais relevantes de otimização.
-        </p>
-        <div className="relatorios-improvements__table-wrapper">
-          <table className="relatorios-improvements__table">
-            <thead>
+        {/* Tabela de melhorias */}
+        <section className="section relatorios-improvements">
+          <h2>Pontos de melhoria</h2>
+          <p className="relatorios-improvements__hint">
+            Itens com menor score representam oportunidades mais relevantes de otimização.
+          </p>
+          <div className="relatorios-improvements__table-wrapper">
+            <table className="relatorios-improvements__table">
+              <thead>
               <tr>
                 <th>Auditoria</th>
                 <th>Score</th>
                 <th>Valor</th>
                 <th>Descrição</th>
               </tr>
-            </thead>
-            <tbody>
+              </thead>
+              <tbody>
               {improvements.map((imp) => (
-                <tr key={imp.id}>
-                  <td className="imp-title">{imp.title}</td>
-                  <td>
-                    {imp.score !== null ? (
-                      <span className={getScoreClass(imp.score)}>
+                  <tr key={imp.id}>
+                    <td className="imp-title">{imp.title}</td>
+                    <td>
+                      {imp.score !== null ? (
+                          <span className={getScoreClass(imp.score)}>
                         {formatScore(imp.score)}
                       </span>
-                    ) : (
-                      <span className="score-pill score-pill--unknown">—</span>
-                    )}
-                  </td>
-                  <td className="imp-value">{imp.displayValue ?? '—'}</td>
-                  <td className="imp-description">{imp.description}</td>
-                </tr>
+                      ) : (
+                          <span className="score-pill score-pill--unknown">—</span>
+                      )}
+                    </td>
+                    <td className="imp-value">{imp.displayValue ?? '—'}</td>
+                    <td className="imp-description">{imp.description}</td>
+                  </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
   );
 }

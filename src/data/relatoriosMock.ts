@@ -87,7 +87,7 @@ export const RELATORIOS_MOCK: RelatorioPWA[] = [
     ],
     runWarnings: [],
   },
-  // Exemplo de outro relatório (pode clonar e mudar dados)
+  // dado mockado
   {
     _id: '692c7d23c9423fdc3357cd65',
     url: 'https://web.dev/',
